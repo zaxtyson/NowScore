@@ -4,7 +4,7 @@ send_keys = [
 ]
 
 # 公司数 < 此值 时数据将被丢弃
-min_company_num = 50
+min_company_num = 60
 
 # 初指平均值 >= 此值 时数据将被丢弃
 max_index_avg = 0.95

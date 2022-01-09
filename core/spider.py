@@ -1,7 +1,7 @@
 import asyncio
 import queue
 import re
-from typing import Callable
+from typing import Callable, List
 
 from lxml.etree import Element
 
@@ -37,6 +37,13 @@ class NowScoreSpider(HtmlParseHelper):
         """Processing meta info in other threads to avoid blocking
         main event loop"""
         return self._meta_queue
+
+    def get_meta_list(self) -> List[LeagueMetaInfo]:
+        """Consume all data in meta_queue, return meta list"""
+        meta_list = []
+        while not self._meta_queue.empty():
+            meta_list.append(self._meta_queue.get())
+        return meta_list
 
     async def _parse_meta_info(self):
         url = "http://score.nowscore.com/1x2/bet007history.htm"
