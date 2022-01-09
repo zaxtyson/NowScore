@@ -145,5 +145,6 @@ class NowScoreSpider(HtmlParseHelper):
         await self.close_session()
 
     def run(self):
+        logger.info("\n\n" + "=" * 100)
         loop = asyncio.get_event_loop()
         loop.run_until_complete(self._main())
