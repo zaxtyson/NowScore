@@ -91,7 +91,7 @@ class NowScoreSpider(HtmlParseHelper):
         # in function CreateTable()
         for item in game:
             if "Bet 365" in item:
-                detail.bet365_host_win = float(item.split("|")[10])
+                detail.bet365_host_win = float(item.split("|")[3])
 
         # Calculate kali index
         index1 = []
