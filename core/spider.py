@@ -58,7 +58,8 @@ class NowScoreSpider(HtmlParseHelper):
 
     async def _parse_detail_info(self, meta: LeagueMetaInfo):
         detail = LeagueDetailInfo()
-        detail._detail_url = meta.detail_url  # for debug
+        detail.meta = meta
+
         # Parse match state info
         # See: http://score.nowscore.com/script/football/LiveMatchState.js
         # schedule_id = self.xpath(html, '//input[@id="hide_scheduleId"]/@value')[0]
@@ -91,7 +92,8 @@ class NowScoreSpider(HtmlParseHelper):
         # in function CreateTable()
         for item in game:
             if "Bet 365" in item:
-                detail.bet365_host_win = float(item.split("|")[3])
+                # index 3 is 即时, index 10 is 初指
+                detail.bet365_host_win = float(item.split("|")[10])
 
         # Calculate kali index
         index1 = []

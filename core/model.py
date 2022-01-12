@@ -12,6 +12,9 @@ class LeagueMetaInfo:
     def __str__(self):
         return str(self.__dict__)
 
+    def __repr__(self):
+        return str(self)
+
 
 class LeagueDetailInfo:
 
@@ -21,7 +24,7 @@ class LeagueDetailInfo:
         self.index_avg = [0, 0, 0]
         self.index_low = [0, 0, 0]
         self.index_high = [0, 0, 0]
-        self._detail_url = ""  # for debug
+        self.meta = None
 
     @property
     def state(self):
