@@ -1,5 +1,15 @@
 from config import *
 from core.model import LeagueMetaInfo, LeagueDetailInfo
+import datetime
+
+
+def is_today(date: str):
+    # format '01-15 08:00'
+    today = datetime.datetime.now()
+    target = datetime.datetime.strptime(date, "%m-%d %H:%M")
+    if today.month == target.month and today.day == target.day:
+        return True
+    return False
 
 
 def is_upward(data: list):
@@ -24,6 +34,8 @@ def is_downward(data: list):
 
 def custom_meta_filter(meta: LeagueMetaInfo) -> bool:
     if meta.company_num < min_company_num:
+        return False
+    if not is_today(meta.time):
         return False
     return True
 

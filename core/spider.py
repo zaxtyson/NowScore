@@ -4,7 +4,7 @@ import re
 from typing import Callable, List
 
 from lxml.etree import Element
-
+import datetime
 from core.helper import HtmlParseHelper
 from core.model import LeagueMetaInfo, LeagueDetailInfo
 from utils.logger import logger
@@ -45,8 +45,8 @@ class NowScoreSpider(HtmlParseHelper):
             meta_list.append(self._meta_queue.get())
         return meta_list
 
-    async def _parse_meta_info(self):
-        url = "http://score.nowscore.com/1x2/bet007history.htm"
+    async def _parse_meta_info(self, date: str):
+        url = f"http://score.nowscore.com/1x2/bet007history.htm?matchdate={date}"
         resp = await self.get(url)
         if not resp or resp.status != 200:
             return
@@ -140,8 +140,9 @@ class NowScoreSpider(HtmlParseHelper):
         # no set filter or this info is useful
         return True
 
-    async def _main(self):
-        async for meta in self._parse_meta_info():
+    async def _parse_one_page(self, date: str):
+        logger.info(f"Parse page on {date}")
+        async for meta in self._parse_meta_info(date):
             if not self._is_meta_useful(meta):
                 continue  # drop this meta info
             detail = await self._parse_detail_info(meta)
@@ -151,6 +152,12 @@ class NowScoreSpider(HtmlParseHelper):
             self._meta_queue.put(meta)
             if self._meta_callback:
                 self._meta_callback(meta)
+
+    async def _main(self):
+        today = datetime.datetime.now()
+        yesterday = today - datetime.timedelta(days=1)
+        await self._parse_one_page(yesterday.strftime("%Y-%m-%d"))
+        await self._parse_one_page(today.strftime("%Y-%m-%d"))
         await self.close_session()
 
     def run(self):
