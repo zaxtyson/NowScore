@@ -56,7 +56,7 @@ def custom_detail_filter(detail: LeagueDetailInfo) -> bool:
         if not enable_mid_value_filter:
             return True
         # do more check
-        if detail.index_high[1] <= 1:
+        if detail.index_high[1] >= 1:
             return True
     if is_upward(detail.index_high) and is_downward(detail.index_low):
         return True
