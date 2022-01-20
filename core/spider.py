@@ -46,7 +46,7 @@ class NowScoreSpider(HtmlParseHelper):
         return meta_list
 
     async def _parse_meta_info(self, date: str):
-        url = f"http://score.nowscore.com/1x2/bet007history.htm?matchdate={date}"
+        url = f"http://live.nowscore.com/1x2/bet007history.htm?matchdate={date}"
         resp = await self.get(url)
         if not resp or resp.status != 200:
             return
@@ -66,7 +66,7 @@ class NowScoreSpider(HtmlParseHelper):
         schedule_id = meta.detail_url.replace(".htm", "")  # ID can be found in url
 
         # in function scoreobj(data)
-        url = "http://score.nowscore.com/football/GetLiveScore?scheid=" + schedule_id
+        url = "http://live.nowscore.com/football/GetLiveScore?scheid=" + schedule_id
         resp = await self.get(url)
         if not resp or resp.status != 200:
             return detail  # error
