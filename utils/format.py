@@ -14,7 +14,7 @@ def make_markdown_message(meta_list: List[LeagueMetaInfo]) -> str:
     message += "\n\n|联赛名|时间|主队名|客队名|链接|"
     message += "\n| :-: | :-: | :-: |:-:|:-:|"
     for meta in meta_list:
-        url_text = f"[查看](http://score.nowscore.com/1x2/{meta.detail_url})"
+        url_text = f"[查看](http://live.nowscore.com/1x2/{meta.detail_url})"
         message += f"\n|{meta.name}|{meta.time}|{meta.home_team}|{meta.guest_team}|{url_text}|"
     message = message.replace("[", r"\[")
     message = message.replace(r"\[查看]", "[查看]")

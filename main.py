@@ -18,6 +18,9 @@ if __name__ == '__main__':
     # Let's start
     spider.run()
     meta_list = spider.get_meta_list()
-    if push_strategy.need_push(meta_list):
-        msg = make_markdown_message(meta_list)
-        wechat.push("NowScoreSpider 推送", msg)
+    meta_list = push_strategy.push_filter(meta_list)
+    if not meta_list:
+        exit(0)
+
+    msg = make_markdown_message(meta_list)
+    wechat.push("NowScoreSpider 推送", msg)

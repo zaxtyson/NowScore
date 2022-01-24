@@ -21,7 +21,7 @@ class HtmlParseHelper:
     @staticmethod
     def _set_headers(kwargs: dict):
         """Set headers, if not set "User-Agent", use random ua"""
-        kwargs.setdefault("timeout", ClientTimeout(total=30, sock_connect=5))
+        kwargs.setdefault("timeout", ClientTimeout(total=30, sock_connect=15))
 
         if "headers" not in kwargs:
             kwargs["headers"] = {"User-Agent": get_random_ua()}
