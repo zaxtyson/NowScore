@@ -6,6 +6,7 @@ class LeagueMetaInfo:
         self.home_team = ""
         self.guest_team = ""
         self.score = ""
+        self.game_data = []
         self.company_num = 0
         self.detail_url = ""
 

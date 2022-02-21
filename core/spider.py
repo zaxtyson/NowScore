@@ -122,6 +122,10 @@ class NowScoreSpider(HtmlParseHelper):
         company_num = item.xpath('td[@class="gocheck"]/text()')[0]
         info.company_num = int(company_num.strip("()"))
         info.detail_url = item.xpath('td[@class="gocheck"]/a/@href')[0]  # "2137086.htm"
+        game_data_1 = item.xpath(".//td[position()>=4 and position()<=6]/text()")
+        info.game_data = [float(i) for i in game_data_1]
+        game_data_2 = item.xpath("following-sibling::tr[1]//td/text()")[:3]  # maybe []
+        info.game_data.extend([float(i) for i in game_data_2])
         return info
 
     def _is_meta_useful(self, meta: LeagueMetaInfo) -> bool:

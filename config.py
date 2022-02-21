@@ -12,8 +12,14 @@ max_index_avg = 0.93
 # 初指最高值 >= 此值 时数据将被丢弃
 max_index_high = 1.2
 
+# 初指最低值 < 此值 时数据将被丢弃
+min_index_low = 0.7
+
+# 第二行第二个数据 <= 此值 时数据将被丢弃
+min_game_data_2_2 = 2.8
+
 # Bet365主胜 < 此值 时数据将被丢弃
-min_bet365_host_win = 1.6
+min_bet365_host_win = 2
 
 # 初指最高值满足递增趋势时, 是否启用"中值 >= 1"这个条件
 enable_mid_value_filter = True

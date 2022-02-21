@@ -15,7 +15,7 @@ def is_today(date: str):
 def is_upward(data: list):
     last = float("-inf")
     for i in data:
-        if i > last:
+        if round(i - last, 2) > 0:
             last = i
         else:
             return False
@@ -25,7 +25,7 @@ def is_upward(data: list):
 def is_downward(data: list):
     last = float("inf")
     for i in data:
-        if i < last:
+        if round(i - last, 2) < 0:
             last = i
         else:
             return False
@@ -37,6 +37,16 @@ def custom_meta_filter(meta: LeagueMetaInfo) -> bool:
         return False
     if not is_today(meta.time):
         return False
+    # check game data validation
+    if len(set(meta.game_data)) != 6:
+        return False
+    if meta.game_data[4] <= min_game_data_2_2:
+        return False
+    col_sum = [meta.game_data[i] + meta.game_data[i + 3] for i in range(3)]
+    if not is_upward(col_sum):
+        return False
+
+    # everything ok
     return True
 
 
@@ -44,11 +54,13 @@ def custom_detail_filter(detail: LeagueDetailInfo) -> bool:
     # Base condition
     if detail.state in ["推迟", "错误"]:
         return False
-    if any(i >= max_index_avg for i in detail.index_avg):
+    if detail.bet365_host_win < min_bet365_host_win:
         return False
     if any(i >= max_index_high for i in detail.index_high):
         return False
-    if detail.bet365_host_win < min_bet365_host_win:
+    if any(i < min_index_low for i in detail.index_low):
+        return False
+    if any(i >= max_index_avg for i in detail.index_avg):
         return False
 
     # Target condition
