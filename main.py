@@ -23,4 +23,4 @@ if __name__ == '__main__':
         exit(0)
 
     msg = make_markdown_message(meta_list)
-    wechat.push("NowScoreSpider 推送", msg)
+    wechat.push("NowScoreSpider 推送", msg, repeat=3, interval=1)
