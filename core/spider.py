@@ -92,21 +92,37 @@ class NowScoreSpider(HtmlParseHelper):
         # in function CreateTable()
         for item in game:
             if "Bet 365" in item:
-                # index 3 is 即时, index 10 is 初指
-                detail.bet365_host_win = float(item.split("|")[10])
+                # index 3 -> 初指, index 10 -> 即时
+                bet365 = item.split("|")
+                detail.bet365_host_win = float(bet365[10])
+                detail.bet365_guest_win = float(bet365[12])
 
-        # Calculate kali index
-        index1 = []
-        index2 = []
-        index3 = []
+        # Calculate index_avg_data
+        index_list = [[] for _ in range(6)]
         for item in game:
             item = item.split("|")
-            index1.append(float(item[17]))
-            index2.append(float(item[18]))
-            index3.append(float(item[19]))
-        detail.index_low = [min(index1), min(index2), min(index3)]
-        detail.index_high = [max(index1), max(index2), max(index3)]
-        detail.index_avg = [sum(index1) / len(index1), sum(index2) / len(index2), sum(index3) / len(index3)]
+            index_list[0].append(float(item[3]))
+            index_list[1].append(float(item[4]))
+            index_list[2].append(float(item[5]))
+            index_list[3].append(float(item[10]))
+            index_list[4].append(float(item[11]))
+            index_list[5].append(float(item[12]))
+
+        detail.index_low_data = [round(min(l), 2) for l in index_list]
+        detail.index_high_data = [round(max(l), 2) for l in index_list]
+        detail.index_avg_data = [round(sum(l) / len(l), 2) for l in index_list]
+
+        # Calculate index_avg(kali index)
+        index_list = [[] for _ in range(3)]
+        for item in game:
+            item = item.split("|")
+            index_list[0].append(float(item[17]))
+            index_list[1].append(float(item[18]))
+            index_list[2].append(float(item[19]))
+
+        detail.index_low_kali = [round(min(l), 2) for l in index_list]
+        detail.index_high_kali = [round(max(l), 2) for l in index_list]
+        detail.index_avg_kali = [round(sum(l) / len(l), 2) for l in index_list]
         return detail
 
     @staticmethod
@@ -123,9 +139,9 @@ class NowScoreSpider(HtmlParseHelper):
         info.company_num = int(company_num.strip("()"))
         info.detail_url = item.xpath('td[@class="gocheck"]/a/@href')[0]  # "2137086.htm"
         game_data_1 = item.xpath(".//td[position()>=4 and position()<=6]/text()")
-        info.game_data = [float(i) for i in game_data_1]
+        info.game_data = [round(float(i), 2) for i in game_data_1]
         game_data_2 = item.xpath("following-sibling::tr[1]//td/text()")[:3]  # maybe []
-        info.game_data.extend([float(i) for i in game_data_2])
+        info.game_data.extend([round(float(i), 2) for i in game_data_2])
         return info
 
     def _is_meta_useful(self, meta: LeagueMetaInfo) -> bool:

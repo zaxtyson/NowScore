@@ -19,7 +19,7 @@ min_index_low = 0.7
 min_game_data_2_2 = 2.8
 
 # Bet365主胜 < 此值 时数据将被丢弃
-min_bet365_host_win = 2
+min_bet365_host_win = 1.8
 
 # 初指最高值满足递增趋势时, 是否启用"中值 >= 1"这个条件
 enable_mid_value_filter = True

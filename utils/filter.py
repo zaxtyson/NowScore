@@ -15,7 +15,7 @@ def is_today(date: str):
 def is_upward(data: list):
     last = float("-inf")
     for i in data:
-        if round(i - last, 2) > 0:
+        if i > last:
             last = i
         else:
             return False
@@ -25,7 +25,7 @@ def is_upward(data: list):
 def is_downward(data: list):
     last = float("inf")
     for i in data:
-        if round(i - last, 2) < 0:
+        if i < last:
             last = i
         else:
             return False
@@ -38,16 +38,16 @@ def custom_meta_filter(meta: LeagueMetaInfo) -> bool:
     if not is_today(meta.time):
         return False
     # check game data validation
-    if len(set(meta.game_data)) != 6:
-        return False
-    if meta.game_data[4] <= min_game_data_2_2:
-        return False
-    col_sum = [meta.game_data[i] + meta.game_data[i + 3] for i in range(3)]
-    if not is_upward(col_sum):
+    if len(meta.game_data) != 6:
         return False
 
-    # everything ok
-    return True
+    D = meta.game_data
+    if D[5] > D[2] and D[1] > D[4] > D[0] > D[3]:
+        return True
+    if D[5] > D[2] > D[4] > D[1] > D[0] > D[3]:
+        return True
+    # others
+    return False
 
 
 def custom_detail_filter(detail: LeagueDetailInfo) -> bool:
@@ -56,22 +56,26 @@ def custom_detail_filter(detail: LeagueDetailInfo) -> bool:
         return False
     if detail.bet365_host_win < min_bet365_host_win:
         return False
-    if any(i >= max_index_high for i in detail.index_high):
+    if any(i >= max_index_high for i in detail.index_high_kali):
         return False
-    if any(i < min_index_low for i in detail.index_low):
+    if any(i < min_index_low for i in detail.index_low_kali):
         return False
-    if any(i >= max_index_avg for i in detail.index_avg):
+    if len(set(i for i in detail.index_avg_kali)) != 1:
+        return False
+    if any(i >= max_index_avg for i in detail.index_avg_kali):
+        return False
+    if detail.bet365_guest_win <= detail.index_avg_data[2]:
+        return False
+    if detail.bet365_guest_win <= detail.index_avg_data[5]:
         return False
 
     # Target condition
-    if is_upward(detail.index_high) and detail.index_high[0] < 1:
+    if is_upward(detail.index_high_kali) and detail.index_high_kali[0] < 1:
         if not enable_mid_value_filter:
             return True
         # do more check
-        if detail.index_high[1] >= 1:
+        if detail.index_high_kali[1] >= 1:
             return True
-    if is_upward(detail.index_high) and is_downward(detail.index_low):
-        return True
-    if is_upward(detail.index_high) and is_upward(detail.index_low):
+    if is_upward(detail.index_high_kali) and is_downward(detail.index_low_kali):
         return True
     return False
