@@ -42,7 +42,7 @@ def custom_meta_filter(meta: LeagueMetaInfo) -> bool:
         return False
 
     D = meta.game_data
-    if D[5] > D[2] and D[1] > D[4] > D[0] > D[3]:
+    if D[5] > D[2] > D[1] > D[4] > D[0] > D[3]:
         return True
     if D[5] > D[2] > D[4] > D[1] > D[0] > D[3]:
         return True

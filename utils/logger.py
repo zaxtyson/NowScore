@@ -1,6 +1,6 @@
 import logging
 import os
-from logging.handlers import TimedRotatingFileHandler
+from logging.handlers import RotatingFileHandler
 
 __all__ = ["logger"]
 
@@ -22,11 +22,11 @@ logger.addHandler(console_handler)
 logging_path = os.path.dirname(__file__) + "/../logs"
 if not os.path.exists(logging_path):
     os.makedirs(logging_path)
-file_handler = TimedRotatingFileHandler(
+file_handler = RotatingFileHandler(
     filename=logging_path + "/app.log",
-    when="H",
-    interval=1,
-    backupCount=3,
+    mode="a",
+    maxBytes=10 * 1024 * 1024,
+    backupCount=5,
     encoding="utf-8")
 file_handler.setFormatter(formatter)
 file_handler.setLevel(logging.DEBUG)

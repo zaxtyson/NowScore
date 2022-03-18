@@ -158,6 +158,7 @@ class NowScoreSpider(HtmlParseHelper):
                 logger.warn(f"Drop detail data {detail}")
                 return False
         # no set filter or this info is useful
+        logger.info(f"Store detail data {detail}")
         return True
 
     async def _parse_one_page(self, date: str):
