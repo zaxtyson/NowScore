@@ -96,6 +96,7 @@ class NowScoreSpider(HtmlParseHelper):
                 # index 3 -> 初指, index 10 -> 即时
                 bet365 = item.split("|")
                 detail.bet365_host_win = float(bet365[10])
+                detail.bet365_sum = float(bet365[11])
                 detail.bet365_guest_win = float(bet365[12])
 
         # Calculate index_avg_data

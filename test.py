@@ -9,3 +9,5 @@ if __name__ == '__main__':
 
     # Let's start
     spider.run(date="2022-03-20")
+    for meta in spider.get_meta_list():
+        print(meta)

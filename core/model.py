@@ -22,6 +22,7 @@ class LeagueDetailInfo:
     def __init__(self):
         self._state = -100
         self.bet365_host_win = 0
+        self.bet365_sum = 0
         self.bet365_guest_win = 0
         self.index_avg_data = [0, 0, 0, 0, 0, 0]
         self.index_avg_kali = [0, 0, 0]
