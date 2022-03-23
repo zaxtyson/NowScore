@@ -3,9 +3,11 @@ from core.model import LeagueMetaInfo, LeagueDetailInfo
 import datetime
 
 
-def is_today(date: str):
+def is_today(date: str, debug_date=""):
     # format '01-15 08:00'
     today = datetime.datetime.now()
+    if debug_date:
+        today = datetime.datetime.strptime(debug_date, "%Y-%m-%d")
     target = datetime.datetime.strptime(date, "%m-%d %H:%M")
     if today.month == target.month and today.day == target.day:
         return True
@@ -32,10 +34,10 @@ def is_downward(data: list):
     return True
 
 
-def custom_meta_filter(meta: LeagueMetaInfo) -> bool:
-    if meta.company_num < min_company_num:
+def custom_meta_filter(meta: LeagueMetaInfo, debug_date="") -> bool:
+    if not is_today(meta.time, debug_date):
         return False
-    if not is_today(meta.time):
+    if meta.company_num < min_company_num:
         return False
     # check game data validation
     if len(meta.game_data) != 6:

@@ -17,6 +17,7 @@ class NowScoreSpider(HtmlParseHelper):
         self._meta_filter = None
         self._detail_filter = None
         self._meta_callback = None
+        self._debug_date = ""
         self._meta_queue = queue.Queue()
 
     def set_meta_filter(self, pred: Callable[[LeagueMetaInfo], bool]):
@@ -146,7 +147,7 @@ class NowScoreSpider(HtmlParseHelper):
 
     def _is_meta_useful(self, meta: LeagueMetaInfo) -> bool:
         if self._meta_filter:  # if user set meta filter
-            if not self._meta_filter(meta):  # drop this meta info
+            if not self._meta_filter(meta, self._debug_date):  # drop this meta info
                 logger.warn(f"Drop meta data {meta}")
                 return False
         # no set filter or this info is useful
@@ -175,13 +176,19 @@ class NowScoreSpider(HtmlParseHelper):
                 self._meta_callback(meta)
 
     async def _main(self):
+        if self._debug_date:  # for debug
+            await self._parse_one_page(self._debug_date)
+            await self.close_session()
+            return
+
         today = datetime.datetime.now()
         yesterday = today - datetime.timedelta(days=1)
         await self._parse_one_page(yesterday.strftime("%Y-%m-%d"))
         await self._parse_one_page(today.strftime("%Y-%m-%d"))
         await self.close_session()
 
-    def run(self):
+    def run(self, date=""):
+        self._debug_date = date
         logger.info("\n\n" + "=" * 100)
         loop = asyncio.get_event_loop()
         loop.run_until_complete(self._main())
