@@ -69,9 +69,15 @@ def custom_detail_filter(detail: LeagueDetailInfo) -> bool:
     # step 8
     if detail.bet365_host_win >= detail.index_avg_data[0]:
         return False
+    if detail.bet365_host_win >= detail.index_avg_data[3]:
+        return False
     if detail.bet365_sum <= detail.index_avg_data[1]:
         return False
     if detail.bet365_guest_win <= detail.index_avg_data[2]:
+        return False
+    if detail.bet365_sum <= detail.index_avg_data[3]:
+        return False
+    if detail.bet365_guest_win <= detail.index_avg_data[4]:
         return False
 
     # Target condition
