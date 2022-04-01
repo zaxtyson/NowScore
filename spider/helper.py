@@ -3,8 +3,8 @@ from typing import Optional
 from aiohttp import ClientSession, ClientResponse, ClientTimeout
 from lxml import etree
 
+from spider.user_agent import get_random_ua
 from utils.logger import logger
-from utils.user_agent import get_random_ua
 
 __all__ = ["HtmlParseHelper"]
 

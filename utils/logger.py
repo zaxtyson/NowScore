@@ -18,7 +18,7 @@ console_handler.setFormatter(formatter)
 console_handler.setLevel(logging.INFO)
 logger.addHandler(console_handler)
 
-# Output log to file(only save the nearest 3 hours)
+# Output log to file
 logging_path = os.path.dirname(__file__) + "/../logs"
 if not os.path.exists(logging_path):
     os.makedirs(logging_path)
@@ -26,8 +26,8 @@ file_handler = RotatingFileHandler(
     filename=logging_path + "/app.log",
     mode="a",
     maxBytes=10 * 1024 * 1024,
-    backupCount=5,
+    backupCount=50,
     encoding="utf-8")
 file_handler.setFormatter(formatter)
-file_handler.setLevel(logging.DEBUG)
+file_handler.setLevel(logging.INFO)
 logger.addHandler(file_handler)

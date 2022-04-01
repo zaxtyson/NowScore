@@ -1,26 +1,24 @@
-from config import send_keys
-from core.spider import NowScoreSpider
-from core.wechat import WechatPusher
-from utils.filter import custom_meta_filter, custom_detail_filter
-from utils.format import make_markdown_message
-from utils.push_check import PushStrategy
+import asyncio
+
+from config import wechat_send_keys, wechat_push_repeat, wechat_push_interval
+from pusher.msg_format import make_markdown_message
+from pusher.wechat import WechatPusher
+from spider.spider import NowScoreSpider
+from strategy.s_2022_03_31 import SpiderStrategy
 
 if __name__ == '__main__':
     spider = NowScoreSpider()
-    spider.set_meta_filter(custom_meta_filter)
-    spider.set_detail_filter(custom_detail_filter)
-    spider.set_meta_callback(print)
+    spider.set_strategy(SpiderStrategy())
 
     wechat = WechatPusher()
-    wechat.set_sed_keys(send_keys)
-    push_strategy = PushStrategy()
+    wechat.set_send_keys(wechat_send_keys)
 
-    # Let's start
-    spider.run()
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(spider.start())
+
     meta_list = spider.get_meta_list()
-    meta_list = push_strategy.push_filter(meta_list)
     if not meta_list:
         exit(0)
 
     msg = make_markdown_message(meta_list)
-    wechat.push("NowScoreSpider 推送", msg, repeat=3, interval=1)
+    wechat.push("NowScoreSpider 推送", msg, repeat=wechat_push_repeat, interval=wechat_push_interval)

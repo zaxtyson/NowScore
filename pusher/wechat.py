@@ -1,8 +1,10 @@
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import requests
-from typing import List
-from utils.logger import logger
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import List
+
+import requests
+
+from utils.logger import logger
 
 
 class WechatPusher:
@@ -11,7 +13,7 @@ class WechatPusher:
         self._send_keys = []
         self._executor = ThreadPoolExecutor(max_workers=3)
 
-    def set_sed_keys(self, send_keys: List[str]):
+    def set_send_keys(self, send_keys: List[str]):
         self._send_keys = send_keys
 
     @staticmethod

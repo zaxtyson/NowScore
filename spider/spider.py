@@ -1,0 +1,161 @@
+import queue
+import re
+from datetime import datetime, timedelta
+from typing import List
+
+from lxml.etree import Element
+
+from db.model import MetaItem, DetailInfo, DetailItem
+from db.session import SqlSession
+from spider.helper import HtmlParseHelper
+from spider.history import ParseHistory
+from strategy.base import BaseStrategy
+from utils.logger import logger
+
+
+class NowScoreSpider(HtmlParseHelper):
+
+    def __init__(self):
+        super().__init__()
+        self._meta_queue = queue.Queue()
+        self._strategy = BaseStrategy()
+        self._db = SqlSession()
+        self._history = ParseHistory()
+
+    def set_strategy(self, strategy: BaseStrategy):
+        self._strategy = strategy
+
+    def get_meta_list(self) -> List[MetaItem]:
+        """Consume all data in meta_queue, return meta list"""
+        meta_list = []
+        while not self._meta_queue.empty():
+            meta_list.append(self._meta_queue.get())
+        return meta_list
+
+    async def _parse_meta_item(self, date: str):
+        url = f"http://live.nowscore.com/1x2/bet007history.htm?matchdate={date}"
+        logger.info(f"Parse meta page: {url}")
+        resp = await self.get(url)
+        if not resp or resp.status != 200:
+            return
+        html = await resp.text()
+        # parse info from html
+        data = self.xpath(html, "//tr[@name]")
+        for item in data:
+            yield self._extract_meta_item(item)
+
+    async def _parse_detail_info(self, meta: MetaItem) -> DetailInfo:
+        detail = DetailInfo()
+        detail.meta = meta
+
+        # Parse match state info
+        # See: http://score.nowscore.com/script/football/LiveMatchState.js
+        # schedule_id = self.xpath(html, '//input[@id="hide_scheduleId"]/@value')[0]
+        schedule_id = meta.detail_url.replace(".htm", "")  # ID can be found in url
+        logger.info(f"Parse detail page: http://live.nowscore.com/1x2/{meta.detail_url}")
+
+        # in function scoreobj(data)
+        url = "http://live.nowscore.com/football/GetLiveScore?scheid=" + schedule_id
+        resp = await self.get(url)
+        if not resp or resp.status != 200:
+            return detail  # error
+        data = await resp.text()
+        q = data.split("^")
+        detail.state = int(q[4])
+
+        # Parse other info
+        url = f"http://1x2.nowscore.com/{schedule_id}.js"
+        resp = await self.get(url)
+        if not resp or resp.status != 200:
+            return detail  # error
+        data = await resp.text()
+        game = re.search(r"var game=Array\((.+)\);", data)
+        # `eval` may be dangerous, but it really convenience :)
+        # game = ['xxx|xxx|xxx', 'xxx|xxx|xxx']
+        game = eval(f"[{game.group(1)}]")
+        # game_detail = re.search(r"var game=gameDetail\((.+)\);", data)
+        # game_detail = eval(f"[{game_detail.group(1)}]")
+
+        # Get Bet365 host_win field
+        # See: http://score.nowscore.com/1x2/1x2.js
+        # in function CreateTable()
+        # "281|110510197|Bet 365|4|3.8|1.67|22.48|23.67|53.85|89.93|5.25|4|1.5|17.2|
+        # 22.58|60.22|90.32|0.91|0.93|0.89|2022,03-1,31,00,00,00|365(英国)|1|0"
+
+        for item_str in game:
+            item = item_str.split("|")
+            detail.items.append(DetailItem(
+                detail_url=meta.detail_url,
+                company_name_en=item[2],
+                company_name_zh=item[21],
+                initial_host_win=round(float(item[3]), 2),
+                initial_draw=round(float(item[4]), 2),
+                initial_guest_win=round(float(item[5]), 2),
+                initial_return_rate=round(float(item[9]), 2),
+                instant_host_win=round(float(item[10]), 2),
+                instant_draw=round(float(item[11]), 2),
+                instant_guest_win=round(float(item[12]), 2),
+                instant_return_rate=round(float(item[16]), 2),
+                kali_low=round(float(item[17]), 2),
+                kali_mid=round(float(item[18]), 2),
+                kali_high=round(float(item[19]), 2)
+            ))
+
+        return detail
+
+    @staticmethod
+    def _extract_meta_item(elem: Element) -> MetaItem:
+        item = MetaItem()
+        item.league_name = elem.xpath("td[1]/text()")[0]
+        date_time = elem.xpath("td[2]/text()")[0]  # "03-20 22:00"
+        item.league_time = datetime.strptime(f"{datetime.now().year}-{date_time}", "%Y-%m-%d %H:%M")
+        home_team = elem.xpath('td[@class="team"][1]/a//text()')
+        item.home_team = "".join(home_team).strip()
+        guest_team = elem.xpath('td[@class="team"][2]/a//text()')
+        item.guest_team = "".join(guest_team).strip()
+        item.score = elem.xpath('.//font[@color="red"]/text()')[0]
+        company_num = elem.xpath('td[@class="gocheck"]/text()')[0]
+        item.company_num = int(company_num.strip("()"))
+        item.detail_url = elem.xpath('td[@class="gocheck"]/a/@href')[0]  # "2137086.htm"
+        # game data
+        game_data_1 = elem.xpath(".//td[position()>=4 and position()<=6]/text()")  # ["7.51","3.61","1.43"]
+        game_data_1 = [round(float(i), 2) for i in game_data_1]
+        item.host_win1, item.draw1, item.guest_win1 = game_data_1
+        game_data_2 = elem.xpath("following-sibling::tr[1]//td/text()")[:3]  # maybe []
+        game_data_2 = [round(float(i), 2) for i in game_data_2] or [0, 0, 0]
+        item.host_win2, item.draw2, item.guest_win2 = game_data_2
+        return item
+
+    async def _parse_one_page(self, date: str):
+        async for meta in self._parse_meta_item(date):
+            # skip if we have parsed yet
+            if self._history.contains(meta):
+                continue
+            self._history.add(meta)
+
+            if not self._strategy.is_meta_useful(meta):
+                continue
+
+            detail = await self._parse_detail_info(meta)
+            if self._strategy.worth_push(detail):
+                self._meta_queue.put(meta)
+
+            # insert meta and detail info to db
+            if self._strategy.worth_store(detail):
+                self._db.append(detail)
+
+    async def start(self):
+        logger.info(f"{'=' * 50} Task running {'=' * 50}")
+        self._history.load()
+        now = datetime.now()
+
+        # the data before 8:00 displayed in the page of yesterday
+        if now.hour <= 8:
+            yesterday = now - timedelta(days=1)
+            await self._parse_one_page(yesterday.strftime("%Y-%m-%d"))
+
+        await self._parse_one_page(now.strftime("%Y-%m-%d"))
+        await self.close_session()
+        self._history.save()  # save parse history
+        self._db.commit()
+        logger.info(f"{'=' * 50} Task finished {'=' * 50}\n\n")
