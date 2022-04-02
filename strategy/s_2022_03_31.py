@@ -1,17 +1,11 @@
-from datetime import datetime
-
 from db.model import DetailInfo, MetaItem
 from strategy.base import BaseStrategy, Condition
 
 
 class SpiderStrategy(BaseStrategy):
-    now = datetime.now()
 
     def _is_meta_useful(self, meta: MetaItem) -> bool:
-        c1 = Condition(lambda: meta.company_num > 59)
-        c2 = Condition(lambda: meta.league_time.month == self.now.month and meta.league_time.day == self.now.day)
-        c1.add_next(c2)
-        return c1.is_true()
+        return meta.company_num >= 60
 
     def _worth_store(self, detail: DetailInfo) -> bool:
         return detail.bet365 is not None

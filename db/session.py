@@ -12,6 +12,8 @@ class SqlSession:
         db_url = f"mysql+pymysql://{db_username}:{db_password}@{db_host}/{db_name}?charset=utf8mb4"
         self._engine = create_engine(db_url, echo=False)
         self._session = Session(self._engine)
+        self._to_submit_meta_items = 0
+        self._to_submit_detail_items = 0
         Base.metadata.create_all(self._engine)  # create table if not exists
 
     def __new__(cls):
@@ -21,13 +23,17 @@ class SqlSession:
 
     def append(self, detail: DetailInfo):
         self._session.add(detail.meta)
+        self._to_submit_meta_items += 1
         for item in detail.items:
             self._session.add(item)
+            self._to_submit_detail_items += 1
 
     def commit(self):
         try:
-            logger.info("Commit to database...")
-            self._session.commit()
+            if self._to_submit_meta_items > 0:
+                self._session.commit()
+                logger.info(f"Commit to database, {self._to_submit_meta_items} meta item(s), "
+                            f"{self._to_submit_detail_items} detail item(s)")
         except Exception as e:
             logger.error(f"Commit to db failed: {e}")
 

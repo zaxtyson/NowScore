@@ -17,15 +17,15 @@ class ParseHistory:
             info = json.load(f)
             """
             {
-                "date": "2022-03-31",
+                "date_utc": "2022-03-31",
                 "url": [
                     "xxxx.htm"
                 ]
             }
             """
-            now = datetime.now()
-            history_date = datetime.strptime(info["date"], "%Y-%m-%d")
-            if now.year == history_date.year and now.month == history_date.month and now.day == history_date.day:
+            history = datetime.strptime(info["date_utc"], "%Y-%m-%d")
+            # if history is today, load urls, otherwise, drop urls
+            if history.date() == datetime.utcnow().date():
                 self._parsed_urls = set(info["url"])
             logger.info(f"Load parsed urls: {len(self._parsed_urls)}")
 
@@ -36,7 +36,8 @@ class ParseHistory:
         return meta.detail_url in self._parsed_urls
 
     def save(self):
-        info = {"date": datetime.now().strftime("%Y-%m-%d"), "url": list(self._parsed_urls)}
+        now_utc = datetime.utcnow().strftime("%Y-%m-%d")
+        info = {"date_utc": now_utc, "url": list(self._parsed_urls)}
         with open(self._file, "w") as f:
-            logger.info(f"Save parsed urls: {len(self._parsed_urls)}")
+            logger.info(f"Update parsed urls: {len(self._parsed_urls)}")
             json.dump(info, f, indent=4)

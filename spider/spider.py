@@ -1,6 +1,6 @@
 import queue
 import re
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import List
 
 from lxml.etree import Element
@@ -34,7 +34,7 @@ class NowScoreSpider(HtmlParseHelper):
 
     async def _parse_meta_item(self, date: str):
         url = f"http://live.nowscore.com/1x2/bet007history.htm?matchdate={date}"
-        logger.info(f"Parse meta page: {url}")
+        logger.info(f"Parse page: {url}")
         resp = await self.get(url)
         if not resp or resp.status != 200:
             return
@@ -126,7 +126,7 @@ class NowScoreSpider(HtmlParseHelper):
         item.host_win2, item.draw2, item.guest_win2 = game_data_2
         return item
 
-    async def _parse_one_page(self, date: str):
+    async def _parse(self, date: str):
         async for meta in self._parse_meta_item(date):
             # skip if we have parsed yet
             if self._history.contains(meta):
@@ -145,16 +145,11 @@ class NowScoreSpider(HtmlParseHelper):
                 self._db.append(detail)
 
     async def start(self):
+        now_utc = datetime.utcnow().strftime("%Y-%m-%d")
         logger.info(f"{'=' * 50} Task running {'=' * 50}")
+        logger.info(f"Date now: [UTC] {now_utc}")
         self._history.load()
-        now = datetime.now()
-
-        # the data before 8:00 displayed in the page of yesterday
-        if now.hour <= 8:
-            yesterday = now - timedelta(days=1)
-            await self._parse_one_page(yesterday.strftime("%Y-%m-%d"))
-
-        await self._parse_one_page(now.strftime("%Y-%m-%d"))
+        await self._parse(now_utc)
         await self.close_session()
         self._history.save()  # save parse history
         self._db.commit()
