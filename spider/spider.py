@@ -5,7 +5,7 @@ from typing import List
 
 from lxml.etree import Element
 
-from db.model import MetaItem, DetailInfo, DetailItem
+from db.model import MetaItem, DetailInfo, DetailItem, TrendingItem
 from db.session import SqlSession
 from spider.helper import HtmlParseHelper
 from spider.history import ParseHistory
@@ -17,6 +17,7 @@ class NowScoreSpider(HtmlParseHelper):
 
     def __init__(self):
         super().__init__()
+        self._this_year = "2022"
         self._meta_queue = queue.Queue()
         self._strategy = BaseStrategy()
         self._db = SqlSession()
@@ -73,8 +74,8 @@ class NowScoreSpider(HtmlParseHelper):
         # `eval` may be dangerous, but it really convenience :)
         # game = ['xxx|xxx|xxx', 'xxx|xxx|xxx']
         game = eval(f"[{game.group(1)}]")
-        # game_detail = re.search(r"var game=gameDetail\((.+)\);", data)
-        # game_detail = eval(f"[{game_detail.group(1)}]")
+        game_detail = re.search(r"var gameDetail=Array\((.+)\);", data)
+        game_detail = eval(f"[{game_detail.group(1)}]")
 
         # Get Bet365 host_win field
         # See: http://score.nowscore.com/1x2/1x2.js
@@ -84,7 +85,9 @@ class NowScoreSpider(HtmlParseHelper):
 
         for item_str in game:
             item = item_str.split("|")
+            item_id = item[1]  # '110509523'
             detail.items.append(DetailItem(
+                item_id=int(item_id),
                 detail_url=meta.detail_url,
                 company_name_en=item[2],
                 company_name_zh=item[21],
@@ -98,17 +101,48 @@ class NowScoreSpider(HtmlParseHelper):
                 instant_return_rate=round(float(item[16]), 2),
                 kali_low=round(float(item[17]), 2),
                 kali_mid=round(float(item[18]), 2),
-                kali_high=round(float(item[19]), 2)
+                kali_high=round(float(item[19]), 2),
+                is_main_company=bool(int(item[22])),
+                is_exchange=bool(int(item[23])),
+                trending_list=self._get_trending_list(game_detail, item_id),
             ))
 
         return detail
 
-    @staticmethod
-    def _extract_meta_item(elem: Element) -> MetaItem:
+    def _get_trending_list(self, all_trending_list: List[str], item_id: str) -> List[TrendingItem]:
+        ret = []
+        company_trending = ""
+        for trending_list in all_trending_list:
+            if trending_list.startswith(item_id):
+                company_trending = trending_list
+                break
+
+        if not company_trending:
+            return ret  # impossible
+
+        item_id, rows = company_trending.split("^")
+        for row in rows.split(";"):
+            if not row:
+                continue
+            row = row.split("|")
+            item = TrendingItem()
+            item.detail_item_id = int(item_id)
+            item.host_win = round(float(row[0]), 2)
+            item.draw = round(float(row[1]), 2)
+            item.guest_win = round(float(row[2]), 2)
+            item.change_time = datetime.strptime(f"{self._this_year}-{row[3]}",
+                                                 "%Y-%m-%d %H:%M")  # row[3] == '04-05 07:59'
+            item.kali_low = round(float(row[4]), 2)
+            item.kali_mid = round(float(row[5]), 2)
+            item.kali_high = round(float(row[6]), 2)
+            ret.append(item)
+        return ret
+
+    def _extract_meta_item(self, elem: Element) -> MetaItem:
         item = MetaItem()
         item.league_name = elem.xpath("td[1]/text()")[0]
         date_time = elem.xpath("td[2]/text()")[0]  # "03-20 22:00"
-        item.league_time = datetime.strptime(f"{datetime.now().year}-{date_time}", "%Y-%m-%d %H:%M")
+        item.league_time = datetime.strptime(f"{self._this_year}-{date_time}", "%Y-%m-%d %H:%M")
         home_team = elem.xpath('td[@class="team"][1]/a//text()')
         item.home_team = "".join(home_team).strip()
         guest_team = elem.xpath('td[@class="team"][2]/a//text()')
@@ -144,12 +178,15 @@ class NowScoreSpider(HtmlParseHelper):
             if self._strategy.worth_store(detail):
                 self._db.append(detail)
 
-    async def start(self):
-        now_utc = datetime.utcnow().strftime("%Y-%m-%d")
+    async def start(self, utc_date: datetime = None):
+        utc_date = utc_date or datetime.utcnow()
+        utc_str = utc_date.strftime("%Y-%m-%d")
+        self._this_year = str(utc_date.year)
+
         logger.info(f"{'=' * 50} Task running {'=' * 50}")
-        logger.info(f"Date now: [UTC] {now_utc}")
-        self._history.load()
-        await self._parse(now_utc)
+        logger.info(f"Date now: [UTC] {utc_str}")
+        self._history.load(utc_date)
+        await self._parse(utc_str)
         await self.close_session()
         self._history.save()  # save parse history
         self._db.commit()

@@ -12,7 +12,7 @@ class ParseHistory:
         self._parsed_urls = set()
         self._file = dirname(__file__) + "/history.json"
 
-    def load(self):
+    def load(self, utc_date: datetime):
         with open(self._file, "r") as f:
             info = json.load(f)
             """
@@ -25,7 +25,7 @@ class ParseHistory:
             """
             history = datetime.strptime(info["date_utc"], "%Y-%m-%d")
             # if history is today, load urls, otherwise, drop urls
-            if history.date() == datetime.utcnow().date():
+            if history.date() == utc_date.date():
                 self._parsed_urls = set(info["url"])
             logger.info(f"Load parsed urls: {len(self._parsed_urls)}")
 

@@ -2,7 +2,7 @@ from statistics import mean
 from typing import List, Optional
 
 from cached_property import cached_property
-from sqlalchemy import Column, String, DECIMAL, Integer, DateTime
+from sqlalchemy import Column, String, DECIMAL, Integer, DateTime, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -12,19 +12,19 @@ class MetaItem(Base):
     __tablename__ = "meta"
 
     id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
-    detail_url = Column(String(20), unique=True, nullable=False, comment="详情页链接")
+    detail_url = Column(String(20), unique=True, index=True, nullable=False, comment="详情页链接")
     league_name = Column(String(30), nullable=False, comment="联赛名称")
     league_time = Column(DateTime, nullable=False, comment="联赛时间")
     home_team = Column(String(30), nullable=False, comment="主队名")
     guest_team = Column(String(30), nullable=False, comment="客队名")
     score = Column(String(10), nullable=False, comment="比分")
     company_num = Column(Integer, nullable=False, comment="公司数量")
-    host_win1 = Column(DECIMAL(4, 2), nullable=False, comment="主胜-上")
-    host_win2 = Column(DECIMAL(4, 2), nullable=False, comment="主胜-下")
-    draw1 = Column(DECIMAL(4, 2), nullable=False, comment="和局-上")
-    draw2 = Column(DECIMAL(4, 2), nullable=False, comment="和局-下")
-    guest_win1 = Column(DECIMAL(4, 2), nullable=False, comment="客胜-上")
-    guest_win2 = Column(DECIMAL(4, 2), nullable=False, comment="客胜-下")
+    host_win1 = Column(DECIMAL(5, 2), nullable=False, comment="主胜-上")
+    host_win2 = Column(DECIMAL(5, 2), nullable=False, comment="主胜-下")
+    draw1 = Column(DECIMAL(5, 2), nullable=False, comment="和局-上")
+    draw2 = Column(DECIMAL(5, 2), nullable=False, comment="和局-下")
+    guest_win1 = Column(DECIMAL(5, 2), nullable=False, comment="客胜-上")
+    guest_win2 = Column(DECIMAL(5, 2), nullable=False, comment="客胜-下")
 
     def __str__(self):
         return str({k: v for k, v in self.__dict__.items() if k not in ["_sa_instance_state"]})
@@ -36,18 +36,41 @@ class MetaItem(Base):
 class DetailItem(Base):
     __tablename__ = "detail"
 
-    id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
-    detail_url = Column(String(20), nullable=False, comment="详情页链接")
+    item_id = Column(Integer, primary_key=True, unique=True, comment="该条数据的id")
+    detail_url = Column(String(20), nullable=False, index=True, comment="详情页链接")
     company_name_en = Column(String(30), nullable=False, comment="公司英文名")
     company_name_zh = Column(String(30), nullable=False, comment="公司中文名")
-    initial_host_win = Column(DECIMAL(4, 2), nullable=False, comment="初指-主胜")
-    initial_draw = Column(DECIMAL(4, 2), nullable=False, comment="初指-和局")
-    initial_guest_win = Column(DECIMAL(4, 2), nullable=False, comment="初指-客胜")
+    initial_host_win = Column(DECIMAL(5, 2), nullable=False, comment="初指-主胜")
+    initial_draw = Column(DECIMAL(5, 2), nullable=False, comment="初指-和局")
+    initial_guest_win = Column(DECIMAL(5, 2), nullable=False, comment="初指-客胜")
     initial_return_rate = Column(DECIMAL(5, 2), nullable=False, comment="初指-返还率")
-    instant_host_win = Column(DECIMAL(4, 2), nullable=False, comment="即时-主胜")
-    instant_draw = Column(DECIMAL(4, 2), nullable=False, comment="即时-和局")
-    instant_guest_win = Column(DECIMAL(4, 2), nullable=False, comment="即时-客胜")
+    instant_host_win = Column(DECIMAL(5, 2), nullable=False, comment="即时-主胜")
+    instant_draw = Column(DECIMAL(5, 2), nullable=False, comment="即时-和局")
+    instant_guest_win = Column(DECIMAL(5, 2), nullable=False, comment="即时-客胜")
     instant_return_rate = Column(DECIMAL(5, 2), nullable=False, comment="即时-返还率")
+    kali_low = Column(DECIMAL(3, 2), nullable=False, comment="凯利指数-低")
+    kali_mid = Column(DECIMAL(3, 2), nullable=False, comment="凯利指数-中")
+    kali_high = Column(DECIMAL(3, 2), nullable=False, comment="凯利指数-高")
+    is_main_company = Column(Boolean, nullable=False, default=False, comment="是否主流公司")
+    is_exchange = Column(Boolean, nullable=False, default=False, comment="是否交易所")
+    trending_list = []
+
+    def __str__(self):
+        return str({k: v for k, v in self.__dict__.items() if k not in ["_sa_instance_state", "trending_list"]})
+
+    def __repr__(self):
+        return self.__str__()
+
+
+class TrendingItem(Base):
+    __tablename__ = "trending"
+
+    id = Column(Integer, primary_key=True, unique=True)
+    detail_item_id = Column(Integer, nullable=False, index=True)
+    host_win = Column(DECIMAL(5, 2), nullable=False, comment="主胜")
+    draw = Column(DECIMAL(5, 2), nullable=False, comment="和局")
+    guest_win = Column(DECIMAL(5, 2), nullable=False, comment="客胜")
+    change_time = Column(DateTime, nullable=False, comment="变化时间")
     kali_low = Column(DECIMAL(3, 2), nullable=False, comment="凯利指数-低")
     kali_mid = Column(DECIMAL(3, 2), nullable=False, comment="凯利指数-中")
     kali_high = Column(DECIMAL(3, 2), nullable=False, comment="凯利指数-高")

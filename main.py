@@ -17,8 +17,6 @@ if __name__ == '__main__':
     loop.run_until_complete(spider.start())
 
     meta_list = spider.get_meta_list()
-    if not meta_list:
-        exit(0)
-
-    msg = make_markdown_message(meta_list)
-    wechat.push("NowScoreSpider 推送", msg, repeat=wechat_push_repeat, interval=wechat_push_interval)
+    if meta_list:
+        msg = make_markdown_message(meta_list)
+        wechat.push("NowScoreSpider 推送", msg, repeat=wechat_push_repeat, interval=wechat_push_interval)

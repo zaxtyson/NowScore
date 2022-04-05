@@ -14,6 +14,7 @@ class SqlSession:
         self._session = Session(self._engine)
         self._to_submit_meta_items = 0
         self._to_submit_detail_items = 0
+        self._to_submit_trending_items = 0
         Base.metadata.create_all(self._engine)  # create table if not exists
 
     def __new__(cls):
@@ -27,15 +28,21 @@ class SqlSession:
         for item in detail.items:
             self._session.add(item)
             self._to_submit_detail_items += 1
+            for trending in item.trending_list:
+                self._session.add(trending)
+                self._to_submit_trending_items += 1
+        self.commit()
 
     def commit(self):
         try:
             if self._to_submit_meta_items > 0:
-                self._session.commit()
                 logger.info(f"Commit to database, {self._to_submit_meta_items} meta item(s), "
-                            f"{self._to_submit_detail_items} detail item(s)")
+                            f"{self._to_submit_detail_items} detail item(s), "
+                            f"{self._to_submit_trending_items} trending item(s)...")
+                self._session.commit()
         except Exception as e:
             logger.error(f"Commit to db failed: {e}")
+            self._session.rollback()
 
     def close(self):
         self._session.close()
