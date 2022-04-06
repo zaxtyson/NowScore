@@ -46,10 +46,7 @@ class NowScoreSpider(HtmlParseHelper):
     async def _parse_meta_item(self, date: str):
         url = f"http://live.nowscore.com/1x2/bet007history.htm?matchdate={date}"
         logger.info(f"Parse page: {url}")
-        resp = await self.get(url)
-        if not resp or resp.status != 200:
-            return
-        html = await resp.text()
+        html = await self.get_text(url)
         # parse info from html
         data = self.xpath(html, "//tr[@name]")
         for item in data:
@@ -67,19 +64,18 @@ class NowScoreSpider(HtmlParseHelper):
 
         # in function scoreobj(data)
         url = "http://live.nowscore.com/football/GetLiveScore?scheid=" + schedule_id
-        resp = await self.get(url)
-        if not resp or resp.status != 200:
+        data = await self.get_text(url)
+        if not data:
             return detail  # error
-        data = await resp.text()
         q = data.split("^")
         detail.state = int(q[4])
 
         # Parse other info
         url = f"http://1x2.nowscore.com/{schedule_id}.js"
-        resp = await self.get(url)
-        if not resp or resp.status != 200:
+        data = await self.get_text(url)
+        if not data:
             return detail  # error
-        data = await resp.text()
+
         game = re.search(r"var game=Array\((.+)\);", data)
         # `eval` may be dangerous, but it really convenience :)
         # game = ['xxx|xxx|xxx', 'xxx|xxx|xxx']

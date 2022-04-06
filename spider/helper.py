@@ -76,6 +76,17 @@ class HtmlParseHelper:
                     self._proxy_pool.remove_proxy(kwargs["proxy"])
                 logger.warning(f"Exception in {self.__class__}: {e}")
 
+    async def get_text(self, url: str, expect_code: int = 200) -> str:
+        for _ in range(2):
+            try:
+                resp = await self.get(url)
+                if not resp or resp.status != expect_code:
+                    return ""
+                return await resp.text()
+            except Exception as e:  # maybe timeout here
+                logger.error(f"Failed to get {url}, {e}")
+        return ""
+
     @staticmethod
     def xpath(html: str, xpath: str) -> Optional[etree.Element]:
         if not html:
