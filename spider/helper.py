@@ -1,8 +1,10 @@
+from time import sleep
 from typing import Optional
 
 from aiohttp import ClientSession, ClientResponse, ClientTimeout
 from lxml import etree
 
+from spider.proxy import ProxyPool
 from spider.user_agent import get_random_ua
 from utils.logger import logger
 
@@ -12,16 +14,25 @@ __all__ = ["HtmlParseHelper"]
 class HtmlParseHelper:
 
     def __init__(self):
+        self._proxy_pool = ProxyPool()
         self._session = ClientSession()
+        self._proxy_pool.setDaemon(True)
+        self._proxy_pool.start()
+
+    def wait_proxy_available(self):
+        while not self._proxy_pool.has_available_proxy():
+            logger.info("Waiting for proxy available...")
+            sleep(1)
 
     async def close_session(self):
         if self._session:
             await self._session.close()
+        self._proxy_pool.stop()
 
-    @staticmethod
-    def _set_headers(kwargs: dict):
+    def _set_headers(self, kwargs: dict):
         """Set headers, if not set "User-Agent", use random ua"""
         kwargs.setdefault("timeout", ClientTimeout(total=30, sock_connect=15))
+        kwargs.setdefault("proxy", self._proxy_pool.get_random_proxy()["http"])
 
         if "headers" not in kwargs:
             kwargs["headers"] = {"User-Agent": get_random_ua()}
@@ -31,24 +42,28 @@ class HtmlParseHelper:
                 kwargs["headers"]["user-agent"] = get_random_ua()
 
     async def get(self, url: str, params: dict = None, **kwargs) -> Optional[ClientResponse]:
-        try:
-            self._set_headers(kwargs)
-            logger.debug(f"GET {url} | Params: {params} | Args: {kwargs}")
-            resp = await self._session.get(url, params=params, **kwargs)
-            logger.debug(f"Code: {resp.status} | Type: {resp.content_type} | Length: {resp.content_length} ({url})")
-            return resp
-        except Exception as e:
-            logger.warning(f"Exception in {self.__class__}: {e}")
+        for _ in range(3):
+            try:
+                self._set_headers(kwargs)
+                logger.debug(f"GET {url} | Params: {params} | Args: {kwargs}")
+                resp = await self._session.get(url, params=params, **kwargs)
+                logger.debug(f"Code: {resp.status} | Type: {resp.content_type} | Length: {resp.content_length} ({url})")
+                return resp
+            except Exception as e:
+                self._proxy_pool.remove_proxy(kwargs["proxy"])
+                logger.warning(f"Exception in {self.__class__}: {e}")
 
     async def post(self, url: str, data: dict = None, **kwargs) -> Optional[ClientResponse]:
-        try:
-            self._set_headers(kwargs)
-            logger.debug(f"POST {url} | Data: {data} | Args: {kwargs}")
-            resp = await self._session.post(url, data=data, **kwargs)
-            logger.debug(f"Code: {resp.status} | Type: {resp.content_type} | Length: {resp.content_length} ({url})")
-            return resp
-        except Exception as e:
-            logger.warning(f"Exception in {self.__class__}: {e}")
+        for _ in range(3):
+            try:
+                self._set_headers(kwargs)
+                logger.debug(f"POST {url} | Data: {data} | Args: {kwargs}")
+                resp = await self._session.post(url, data=data, **kwargs)
+                logger.debug(f"Code: {resp.status} | Type: {resp.content_type} | Length: {resp.content_length} ({url})")
+                return resp
+            except Exception as e:
+                self._proxy_pool.remove_proxy(kwargs["proxy"])
+                logger.warning(f"Exception in {self.__class__}: {e}")
 
     @staticmethod
     def xpath(html: str, xpath: str) -> Optional[etree.Element]:

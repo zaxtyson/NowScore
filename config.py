@@ -14,3 +14,7 @@ db_host = ""
 db_username = ""
 db_password = ""
 db_name = "now_score"
+
+# 代理池 https://http.zhimaruanjian.com/getapi/
+proxy_pool_size = 3
+proxy_api = ""
