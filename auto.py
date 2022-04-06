@@ -10,8 +10,10 @@ async def auto_run(spider: NowScoreSpider):
     end_date = datetime(2022, 4, 5)
 
     while start_date.date() != end_date.date():
-        await spider.start(start_date)
+        await spider.start(utc_date=start_date)
         start_date += timedelta(days=1)
+
+    await spider.close_session()
 
 
 if __name__ == '__main__':

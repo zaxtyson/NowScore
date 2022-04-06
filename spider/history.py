@@ -9,10 +9,14 @@ from utils.logger import logger
 class ParseHistory:
 
     def __init__(self):
+        self._target_date = datetime.utcnow()
         self._parsed_urls = set()
         self._file = dirname(__file__) + "/history.json"
 
-    def load(self, utc_date: datetime):
+    def set_target_date(self, target_date: datetime):
+        self._target_date = target_date
+
+    def load(self):
         with open(self._file, "r") as f:
             info = json.load(f)
             """
@@ -25,7 +29,7 @@ class ParseHistory:
             """
             history = datetime.strptime(info["date_utc"], "%Y-%m-%d")
             # if history is today, load urls, otherwise, drop urls
-            if history.date() == utc_date.date():
+            if history.date() == self._target_date.date():
                 self._parsed_urls = set(info["url"])
             logger.info(f"Load parsed urls: {len(self._parsed_urls)}")
 
@@ -36,8 +40,7 @@ class ParseHistory:
         return meta.detail_url in self._parsed_urls
 
     def save(self):
-        now_utc = datetime.utcnow().strftime("%Y-%m-%d")
-        info = {"date_utc": now_utc, "url": list(self._parsed_urls)}
+        info = {"date_utc": self._target_date.strftime("%Y-%m-%d"), "url": list(self._parsed_urls)}
         with open(self._file, "w") as f:
             logger.info(f"Update parsed urls: {len(self._parsed_urls)}")
             json.dump(info, f, indent=4)

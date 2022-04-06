@@ -185,10 +185,18 @@ class NowScoreSpider(HtmlParseHelper):
 
         logger.info(f"{'=' * 50} Task running {'=' * 50}")
         logger.info(f"Date now: [UTC] {utc_str}")
-        self._history.load(utc_date)
+
+        # load history
+        self._history.set_target_date(utc_date)
+        self._history.load()
+        # wait proxy pool ready
         self.wait_proxy_available()
+        # start parse
         await self._parse(utc_str)
-        self._history.save()  # save parse history
+        # save parse history
+        self._history.save()
+
         logger.info(f"{'=' * 50} Task finished {'=' * 50}\n\n")
+
         if close_after_done:
             await self.close_session()
