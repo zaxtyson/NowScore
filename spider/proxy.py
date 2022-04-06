@@ -34,16 +34,16 @@ class ProxyPool(Thread):
                         "https": f"http://{host}",
                         "expire_time": datetime.strptime(item["expire_time"], "%Y-%m-%d %H:%M:%S")
                     })
-                logger.info(f"ProxyPool add {len(new_proxies)} proxies")
+                logger.info(f"ProxyPool add {len(new_proxies)} proxy, total: {len(self._proxies)}")
                 self._lock.acquire()
                 self._proxies.extend(new_proxies)
                 self._lock.release()
                 break
 
-    def remove_proxy(self, proxy: dict) -> None:
-        logger.warning(f"Remove proxy: {proxy['host']}")
+    def remove_proxy(self, http_proxy: str) -> None:
+        logger.warning(f"Remove proxy: {http_proxy}")
         self._lock.acquire()
-        self._proxies.remove(proxy)
+        self._proxies = list(filter(lambda proxy: proxy["http"] != http_proxy, self._proxies))
         self._lock.release()
 
     def update_proxies(self):
@@ -60,11 +60,11 @@ class ProxyPool(Thread):
         if len(valid_proxies) > 0:
             logger.info(f"ProxyPool remove {len(valid_proxies)} unavailable proxies")
 
-    def get_random_proxy(self) -> dict:
+    def get_random_proxy(self) -> str:
         self._lock.acquire()
-        proxy = random.choice(self._proxies)
+        http_proxy = random.choice(self._proxies)["http"]
         self._lock.release()
-        return proxy
+        return http_proxy
 
     def stop(self):
         self._stop = True

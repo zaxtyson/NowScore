@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import Session
 
 from config import db_host, db_username, db_password, db_name
@@ -15,7 +15,8 @@ class SqlSession:
         self._to_submit_meta_items = 0
         self._to_submit_detail_items = 0
         self._to_submit_trending_items = 0
-        Base.metadata.create_all(self._engine)  # create table if not exists
+        if not inspect(self._engine).has_table("detail_statistic"):
+            Base.metadata.create_all(self._engine)  # create table if not exists
 
     def __new__(cls):
         if not hasattr(cls, "instance"):

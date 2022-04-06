@@ -178,7 +178,7 @@ class NowScoreSpider(HtmlParseHelper):
             if self._strategy.worth_store(detail):
                 self._db.append(detail)
 
-    async def start(self, utc_date: datetime = None):
+    async def start(self, *, utc_date: datetime = None, close_after_done: bool = False):
         utc_date = utc_date or datetime.utcnow()
         utc_str = utc_date.strftime("%Y-%m-%d")
         self._this_year = str(utc_date.year)
@@ -188,7 +188,7 @@ class NowScoreSpider(HtmlParseHelper):
         self._history.load(utc_date)
         self.wait_proxy_available()
         await self._parse(utc_str)
-        await self.close_session()
         self._history.save()  # save parse history
-        self._db.commit()
         logger.info(f"{'=' * 50} Task finished {'=' * 50}\n\n")
+        if close_after_done:
+            await self.close_session()

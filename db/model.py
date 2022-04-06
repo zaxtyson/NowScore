@@ -3,7 +3,9 @@ from typing import List, Optional
 
 from cached_property import cached_property
 from sqlalchemy import Column, String, DECIMAL, Integer, DateTime, Boolean
+from sqlalchemy import select, func
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy_utils import create_view
 
 Base = declarative_base()
 
@@ -255,3 +257,45 @@ class DetailInfo:
 
     def __repr__(self):
         return self.__str__()
+
+
+class DetailStatisticView(Base):
+    stmt = select(
+        DetailItem.detail_url,
+        func.max(DetailItem.initial_host_win).label("initial_max_host_win"),
+        func.max(DetailItem.initial_draw).label("initial_max_draw"),
+        func.max(DetailItem.initial_guest_win).label("initial_max_guest_win"),
+        func.max(DetailItem.instant_host_win).label("instant_max_host_win"),
+        func.max(DetailItem.instant_draw).label("instant_max_draw"),
+        func.max(DetailItem.instant_guest_win).label("instant_max_guest_win"),
+        func.max(DetailItem.initial_return_rate).label("initial_max_return_rate"),
+        func.max(DetailItem.instant_return_rate).label("instant_max_return_rate"),
+        func.min(DetailItem.initial_host_win).label("initial_min_host_win"),
+        func.min(DetailItem.initial_draw).label("initial_min_draw"),
+        func.min(DetailItem.initial_guest_win).label("initial_min_guest_win"),
+        func.min(DetailItem.instant_host_win).label("instant_min_host_win"),
+        func.min(DetailItem.instant_draw).label("instant_min_draw"),
+        func.min(DetailItem.instant_guest_win).label("instant_min_guest_win"),
+        func.min(DetailItem.initial_return_rate).label("initial_min_return_rate"),
+        func.min(DetailItem.instant_return_rate).label("instant_min_return_rate"),
+        func.round(func.avg(DetailItem.initial_host_win), 2).label("initial_avg_host_win"),
+        func.round(func.avg(DetailItem.initial_draw), 2).label("initial_avg_draw"),
+        func.round(func.avg(DetailItem.initial_guest_win), 2).label("initial_avg_guest_win"),
+        func.round(func.avg(DetailItem.instant_host_win), 2).label("instant_avg_host_win"),
+        func.round(func.avg(DetailItem.instant_draw), 2).label("instant_avg_draw"),
+        func.round(func.avg(DetailItem.instant_guest_win), 2).label("instant_avg_guest_win"),
+        func.round(func.avg(DetailItem.initial_return_rate), 2).label("initial_avg_return_rate"),
+        func.round(func.avg(DetailItem.instant_return_rate), 2).label("instant_avg_return_rate"),
+        func.max(DetailItem.kali_low).label("max_kali_low"),
+        func.max(DetailItem.kali_mid).label("max_kali_mid"),
+        func.max(DetailItem.kali_high).label("max_kali_high"),
+        func.min(DetailItem.kali_low).label("min_kali_low"),
+        func.min(DetailItem.kali_mid).label("min_kali_mid"),
+        func.min(DetailItem.kali_high).label("min_kali_high"),
+        func.round(func.avg(DetailItem.kali_low), 2).label("avg_kali_low"),
+        func.round(func.avg(DetailItem.kali_mid), 2).label("avg_kali_mid"),
+        func.round(func.avg(DetailItem.kali_high), 2).label("avg_kali_high")
+    ).group_by(DetailItem.detail_url)
+
+    __tablename__ = "detail_statistic"
+    __table__ = create_view(__tablename__, stmt, Base.metadata)

@@ -14,7 +14,7 @@ if __name__ == '__main__':
     wechat.set_send_keys(wechat_send_keys)
 
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(spider.start())
+    loop.run_until_complete(spider.start(close_after_done=True))
 
     meta_list = spider.get_meta_list()
     if meta_list:
