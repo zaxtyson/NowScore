@@ -9,14 +9,17 @@ from utils.logger import logger
 class ParseHistory:
 
     def __init__(self):
-        self._target_date = datetime.utcnow()
+        self._persistence = True
         self._parsed_urls = set()
         self._file = dirname(__file__) + "/history.json"
 
-    def set_target_date(self, target_date: datetime):
-        self._target_date = target_date
+    def persistence_to_file(self, flag: bool):
+        self._persistence = flag
 
     def load(self):
+        if not self._persistence:
+            return
+
         with open(self._file, "r") as f:
             info = json.load(f)
             """
@@ -29,7 +32,7 @@ class ParseHistory:
             """
             history = datetime.strptime(info["date_utc"], "%Y-%m-%d")
             # if history is today, load urls, otherwise, drop urls
-            if history.date() == self._target_date.date():
+            if history.date() == datetime.utcnow().date():
                 self._parsed_urls = set(info["url"])
             logger.info(f"Load parsed urls: {len(self._parsed_urls)}")
 
@@ -40,7 +43,11 @@ class ParseHistory:
         return meta.detail_url in self._parsed_urls
 
     def save(self):
-        info = {"date_utc": self._target_date.strftime("%Y-%m-%d"), "url": list(self._parsed_urls)}
+        if not self._persistence:
+            return
+
+        now_utc = datetime.utcnow().strftime("%Y-%m-%d")
+        info = {"date_utc": now_utc, "url": list(self._parsed_urls)}
         with open(self._file, "w") as f:
             logger.info(f"Update parsed urls: {len(self._parsed_urls)}")
             json.dump(info, f, indent=4)

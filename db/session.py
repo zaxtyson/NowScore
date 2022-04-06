@@ -40,6 +40,9 @@ class SqlSession:
                 logger.info(f"Commit to database, {self._to_submit_meta_items} meta item(s), "
                             f"{self._to_submit_detail_items} detail item(s), "
                             f"{self._to_submit_trending_items} trending item(s)...")
+                self._to_submit_meta_items = 0
+                self._to_submit_detail_items = 0
+                self._to_submit_trending_items = 0
                 self._session.commit()
         except Exception as e:
             logger.error(f"Commit to db failed: {e}")

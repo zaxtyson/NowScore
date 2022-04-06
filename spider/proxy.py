@@ -23,22 +23,27 @@ class ProxyPool(Thread):
     def fetch_new_proxies(self):
         resp = requests.get(proxy_api)
         for _ in range(3):
-            if resp.status_code == 200:
-                data = resp.json()["data"]
-                new_proxies = []
-                for item in data:
-                    host = f"{item['ip']}:{item['port']}"
-                    new_proxies.append({
-                        "host": host,
-                        "http": f"http://{host}",
-                        "https": f"http://{host}",
-                        "expire_time": datetime.strptime(item["expire_time"], "%Y-%m-%d %H:%M:%S")
-                    })
-                logger.info(f"ProxyPool add {len(new_proxies)} proxy, total: {len(self._proxies)}")
+            if resp.status_code != 200:
+                continue
+            data = resp.json()["data"]
+            new_proxies = []
+            for item in data:
+                host = f"{item['ip']}:{item['port']}"
+                new_proxies.append({
+                    "host": host,
+                    "http": f"http://{host}",
+                    "https": f"http://{host}",
+                    "expire_time": datetime.strptime(item["expire_time"], "%Y-%m-%d %H:%M:%S")
+                })
+
+            if len(new_proxies) > 0:
                 self._lock.acquire()
                 self._proxies.extend(new_proxies)
                 self._lock.release()
-                break
+                logger.info(f"ProxyPool add {len(new_proxies)} proxy, total: {len(self._proxies)}")
+                return
+
+            logger.warning(f"ProxyPool fetch new proxies failed: {resp.json()['msg']}")
 
     def remove_proxy(self, http_proxy: str) -> None:
         logger.warning(f"Remove proxy: {http_proxy}")
@@ -61,6 +66,8 @@ class ProxyPool(Thread):
             logger.info(f"ProxyPool remove {len(valid_proxies)} unavailable proxies")
 
     def get_random_proxy(self) -> str:
+        while len(self._proxies) == 0:
+            sleep(1)  # wait available proxy
         self._lock.acquire()
         http_proxy = random.choice(self._proxies)["http"]
         self._lock.release()

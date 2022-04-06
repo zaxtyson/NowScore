@@ -50,9 +50,9 @@ class DetailItem(Base):
     instant_draw = Column(DECIMAL(5, 2), nullable=False, comment="即时-和局")
     instant_guest_win = Column(DECIMAL(5, 2), nullable=False, comment="即时-客胜")
     instant_return_rate = Column(DECIMAL(5, 2), nullable=False, comment="即时-返还率")
-    kali_low = Column(DECIMAL(3, 2), nullable=False, comment="凯利指数-低")
-    kali_mid = Column(DECIMAL(3, 2), nullable=False, comment="凯利指数-中")
-    kali_high = Column(DECIMAL(3, 2), nullable=False, comment="凯利指数-高")
+    kali_low = Column(DECIMAL(5, 2), nullable=False, comment="凯利指数-低")
+    kali_mid = Column(DECIMAL(5, 2), nullable=False, comment="凯利指数-中")
+    kali_high = Column(DECIMAL(5, 2), nullable=False, comment="凯利指数-高")
     is_main_company = Column(Boolean, nullable=False, default=False, comment="是否主流公司")
     is_exchange = Column(Boolean, nullable=False, default=False, comment="是否交易所")
     trending_list = []
@@ -73,9 +73,9 @@ class TrendingItem(Base):
     draw = Column(DECIMAL(5, 2), nullable=False, comment="和局")
     guest_win = Column(DECIMAL(5, 2), nullable=False, comment="客胜")
     change_time = Column(DateTime, nullable=False, comment="变化时间")
-    kali_low = Column(DECIMAL(3, 2), nullable=False, comment="凯利指数-低")
-    kali_mid = Column(DECIMAL(3, 2), nullable=False, comment="凯利指数-中")
-    kali_high = Column(DECIMAL(3, 2), nullable=False, comment="凯利指数-高")
+    kali_low = Column(DECIMAL(5, 2), nullable=False, comment="凯利指数-低")
+    kali_mid = Column(DECIMAL(5, 2), nullable=False, comment="凯利指数-中")
+    kali_high = Column(DECIMAL(5, 2), nullable=False, comment="凯利指数-高")
 
     def __str__(self):
         return str({k: v for k, v in self.__dict__.items() if k not in ["_sa_instance_state"]})

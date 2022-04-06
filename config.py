@@ -3,16 +3,10 @@ wechat_send_keys = [
     "SCT1107...0mV2FzFQ"
 ]
 
-# 推送间隔, 秒
-wechat_push_interval = 1
-
-# 推送次数
-wechat_push_repeat = 10
-
 # Mysql 配置
-db_host = ""
-db_username = ""
-db_password = ""
+db_host = "localhost:3306"
+db_username = "root"
+db_password = "123456"
 db_name = "now_score"
 
 # 代理池 https://http.zhimaruanjian.com/getapi/

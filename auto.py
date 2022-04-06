@@ -18,6 +18,11 @@ async def auto_run(spider: NowScoreSpider):
 
 if __name__ == '__main__':
     spider = NowScoreSpider()
-    spider.set_strategy(SpiderStrategy())
+    spider.settings(
+        strategy=SpiderStrategy(),
+        persistence_history=False,
+        enable_proxy_pool=True,
+        close_session_after_done=False
+    )
     loop = asyncio.get_event_loop()
     loop.run_until_complete(auto_run(spider))

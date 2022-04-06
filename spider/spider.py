@@ -18,13 +18,23 @@ class NowScoreSpider(HtmlParseHelper):
     def __init__(self):
         super().__init__()
         self._this_year = "2022"
+        self._enable_proxy_pool = False
+        self._close_session_after_parse = False
+
         self._meta_queue = queue.Queue()
         self._strategy = BaseStrategy()
         self._db = SqlSession()
         self._history = ParseHistory()
 
-    def set_strategy(self, strategy: BaseStrategy):
+    def settings(self, *,
+                 strategy: BaseStrategy,
+                 persistence_history: bool = False,
+                 enable_proxy_pool: bool = False,
+                 close_session_after_done: bool = True):
+        self._history.persistence_to_file(persistence_history)
+        self.enable_proxy_pool(enable_proxy_pool)
         self._strategy = strategy
+        self._close_session_after_parse = close_session_after_done
 
     def get_meta_list(self) -> List[MetaItem]:
         """Consume all data in meta_queue, return meta list"""
@@ -178,7 +188,7 @@ class NowScoreSpider(HtmlParseHelper):
             if self._strategy.worth_store(detail):
                 self._db.append(detail)
 
-    async def start(self, *, utc_date: datetime = None, close_after_done: bool = False):
+    async def start(self, *, utc_date: datetime = None):
         utc_date = utc_date or datetime.utcnow()
         utc_str = utc_date.strftime("%Y-%m-%d")
         self._this_year = str(utc_date.year)
@@ -187,7 +197,6 @@ class NowScoreSpider(HtmlParseHelper):
         logger.info(f"Date now: [UTC] {utc_str}")
 
         # load history
-        self._history.set_target_date(utc_date)
         self._history.load()
         # wait proxy pool ready
         self.wait_proxy_available()
@@ -198,5 +207,5 @@ class NowScoreSpider(HtmlParseHelper):
 
         logger.info(f"{'=' * 50} Task finished {'=' * 50}\n\n")
 
-        if close_after_done:
+        if self._close_session_after_parse:
             await self.close_session()
