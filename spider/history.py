@@ -36,6 +36,9 @@ class ParseHistory:
                 self._parsed_urls = set(info["url"])
             logger.info(f"Load parsed urls: {len(self._parsed_urls)}")
 
+    def clear(self):
+        self._parsed_urls.clear()
+
     def add(self, meta: MetaItem):
         self._parsed_urls.add(meta.detail_url)
 

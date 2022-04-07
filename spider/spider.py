@@ -205,3 +205,6 @@ class NowScoreSpider(HtmlParseHelper):
 
         if self._close_session_after_parse:
             await self.close_session()
+        else:
+            self._history.clear()
+            self._meta_queue.queue.clear()
