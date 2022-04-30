@@ -4,7 +4,7 @@ from config import wechat_send_keys
 from pusher.msg_format import make_markdown_message
 from pusher.wechat import WechatPusher
 from spider.spider import NowScoreSpider
-from strategy.s_2022_03_31 import SpiderStrategy
+from strategy.s_2022_04_28 import SpiderStrategy
 
 if __name__ == '__main__':
     spider = NowScoreSpider()

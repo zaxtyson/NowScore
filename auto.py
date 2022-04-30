@@ -2,7 +2,7 @@ import asyncio
 from datetime import datetime, timedelta
 
 from spider.spider import NowScoreSpider
-from strategy.s_2022_03_31 import SpiderStrategy
+from strategy.s_2022_04_28 import SpiderStrategy
 
 
 async def auto_run(spider: NowScoreSpider):
