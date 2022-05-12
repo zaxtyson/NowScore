@@ -18,7 +18,6 @@ class NowScoreSpider(HtmlParseHelper):
     def __init__(self):
         super().__init__()
         self._this_year = "2022"
-        self._enable_proxy_pool = False
         self._close_session_after_parse = False
 
         self._meta_queue = queue.Queue()

@@ -17,14 +17,14 @@ class HtmlParseHelper:
         self._use_proxy_pool = True
         self._proxy_pool = ProxyPool()
         self._session = ClientSession()
-        self._proxy_pool.setDaemon(True)
-        self._proxy_pool.start()
 
     def wait_proxy_available(self):
         if not self._use_proxy_pool:
             logger.info("ProxyPool is not enable")
             return
 
+        self._proxy_pool.setDaemon(True)
+        self._proxy_pool.start()
         while not self._proxy_pool.has_available_proxy():
             logger.info("Waiting for proxy available...")
             sleep(1)
